@@ -3,8 +3,8 @@ package controllers
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/ichtrojan/go-todo/config"
-	"github.com/ichtrojan/go-todo/models"
+	"todolist/config"
+	"todolist/models"
 	"html/template"
 	"net/http"
 )
