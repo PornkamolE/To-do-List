@@ -1,34 +1,52 @@
 package main
 
 import (
+	"bufio"
 	"errors"
-	"github.com/ichtrojan/go-todo/routes"
-	"github.com/ichtrojan/thoth"
-	"github.com/joho/godotenv"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"todolist/routes"
 )
 
-func main() {
-	logger, _ := thoth.Init("log")
-
-	if err := godotenv.Load(); err != nil {
-		logger.Log(errors.New("no .env file found"))
-		log.Fatal("No .env file found")
-	}
-
-	port, exist := os.LookupEnv("PORT")
-
-	if !exist {
-		logger.Log(errors.New("PORT not set in .env"))
-		log.Fatal("PORT not set in .env")
-	}
-
-	err := http.ListenAndServe(":"+port, routes.Init())
-
+func LoadEnv() error {
+	file, err := os.Open(".env")
 	if err != nil {
-		logger.Log(err)
+		return errors.New("no .env file found")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "=") {
+			parts := strings.SplitN(line, "=", 2)
+			key := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+			os.Setenv(key, value) // ตั้งค่าตัวแปรแวดล้อม
+		}
+	}
+	return scanner.Err()
+}
+
+func main() {
+	// โหลดค่าจาก .env
+	if err := LoadEnv(); err != nil {
+		log.Fatal(err)
+	}
+
+	// อ่านค่าพอร์ต ถ้าไม่มีให้ใช้ค่า default 8080
+	port, exist := os.LookupEnv("PORT")
+	if !exist {
+		port = "8080"
+		fmt.Println("PORT not set in .env, using default: 8080")
+	}
+
+	// เริ่ม HTTP Server
+	err := http.ListenAndServe(":"+port, routes.Init())
+	if err != nil {
 		log.Fatal(err)
 	}
 }
